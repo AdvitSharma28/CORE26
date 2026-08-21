@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Homepage — Prototype</title>
+		<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@100;200;300;400;500;600;700&display=swap" rel="stylesheet">
+		<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+	</head>
+	<body>
+
+		<header class="top-nav">
+			<div class="nav-inner">
+				<div class="brand">nCrypt dpssl</div>
+				<nav class="nav-center">
+					<a href="{{ url_for('index') }}" class="active" aria-current="page">Home</a>
+					<a href="{{ url_for('about') }}">About Us</a>
+					<a href="{{ url_for('contact') }}">Contact Us</a>
+					<a href="{{ url_for('blog') }}">Blog</a>
+					<a href="{{ url_for('map') }}">Map</a>
+				</nav>
+				<div class="nav-right">
+					<span class="nav-status"><i></i> SYSTEM ONLINE</span>
+					<button class="theme-toggle" aria-pressed="false" title="Toggle dark mode">
+						<span class="icon icon-moon" aria-hidden="true">
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor"/>
+							</svg>
+						</span>
+						<span class="icon icon-sun" aria-hidden="true">
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<path d="M6.76 4.84l-1.8-1.79L3.17 4.84l1.8 1.79 1.79-1.79zM1 13h3v-2H1v2zm10-9h2V1h-2v3zm7.04 1.05l1.79-1.79-1.79-1.79-1.8 1.79 1.8 1.79zM20 11v2h3v-2h-3zM6.76 19.16l-1.79 1.79 1.79 1.79 1.8-1.79-1.8-1.79zM12 20a8 8 0 100-16 8 8 0 000 16zm4.24-1.16l1.8 1.79 1.79-1.79-1.79-1.79-1.8 1.79zM11 23h2v-3h-2v3z" fill="currentColor"/>
+							</svg>
+						</span>
+					</button>
+					<a class="muted" href="#">core creative</a>
+					<a class="cta" href="{{ url_for('about') }}">ABOUT US</a>
+				</div>
+			</div>
+		</header>
+
+		<main class="page home-page">
+			<section class="hero">
+				<div class="hero-topline"><span>PIONEER INVENTIONS</span><span class="hero-coordinate" data-values="28.6139° N / 77.2090° E|28.7041° N / 77.1025° E|28.4595° N / 77.0266° E|LAB / 28.61° N">28.6139° N / 77.2090° E</span><span>NCRYPT DPSSL</span></div>
+				<div class="hero-left">
+					<div class="label"><span class="hero-terminal-label" data-values="TECH / CATALOG|FIELD / RESEARCH|PROTOTYPE / LOG|MOTION / SYSTEMS|EXPERIMENT / 001|ENGINEERING / LAB|BUILD / SEQUENCE|INVENTION / INDEX">TECH / CATALOG</span><b>01</b></div>
+					<h1 class="hero-title" data-heading="PIONEER|INVENTIONS"><span class="hero-word">PIONEER</span><span class="hero-word hero-word-accent">INVENTIONS</span></h1>
+					<div class="hero-copy-row"><span class="copy-index">A—<span class="field-index">01 / 07</span></span><p class="lead" data-field-note="true" tabindex="0" role="button" aria-live="polite" aria-label="Rotate Pioneer field note">Pioneer turns odd sketches, stubborn materials, and too much curiosity into working machines.</p><span class="field-hint">CLICK TO ROTATE</span></div>
+					<a class="btn-cta" href="{{ url_for('blog') }}"><span>Explore archive</span><b>↗</b></a>
+					<div class="hero-data-strip"><div><span>CURRENT PROJECT</span><strong>ORBITAL HARVESTER</strong></div><div><span>ENVIRONMENTAL INNOVATION / FIELD ID</span><strong>FIELD / MOTION</strong></div><div><span>STATUS</span><strong class="data-active"><i></i> WORKING PROTOTYPE</strong></div></div>
+				</div>
+
+				<div class="hero-visual">
+					<div class="visual-meta visual-meta-top"><span>OBJ / 004</span><span>ACTIVE</span></div>
+					<div class="image-frame"><span class="frame-corner tl"></span><span class="frame-corner br"></span><img class="hero-product" src="{{ url_for('static', filename='assets/product.png') }}" alt="Pioneer product"></div>
+					<div class="visual-meta visual-meta-bottom"><span>PROTOTYPE / INDUSTRIAL</span><span>01:04:26</span></div>
+				</div>
+
+				<div class="hero-aside"><span class="vertical-label hero-vertical-label" data-values="PHINEAS AND FERB CLASSICS|PHINEAS &amp; FERB LAB|DANVILLE ENGINEERING|2 SUMMER GENIUSES|BUILDING SOMETHING TODAY|EVIL SCIENCE? MAYBE.|THE INATOR DEPARTMENT|BACKYARD ENGINEERING|CLASSIFIED / DANVILLE">PHINEAS AND FERB CLASSICS</span><span class="aside-number">01</span><span class="crosshair">+</span></div>
+				<div class="partners">
+					<a class="partner" href="https://www.behance.net/alansocker" target="_blank" rel="noopener noreferrer"><small>01 / FOUNDER</small>Aadi</a>
+					<a class="partner" href="https://www.behance.net/art_trisha" target="_blank" rel="noopener noreferrer"><small>02 / DESIGN</small>Trisha</a>
+					<a class="partner" href="https://www.behance.net/Dupe_Dupe" target="_blank" rel="noopener noreferrer"><small>03 / 3D DESIGNER</small>Arhaan</a>
+					<a class="partner" href="https://www.behance.net/advitsharma" target="_blank" rel="noopener noreferrer"><small>04 / DEVELOPER</small>Advit</a>
+				</div>
+			</section>
+
+			<div class="ticker" aria-label="Pioneer research status"><span>WORKING PROTOTYPE</span><b>///</b><span>IDEAS INTO MACHINES</span><b>///</b><span>STATUS: CURRENTLY NEAR RELEASE</span><b>///</b><span>TESTED ENORMOUSLY</span></div>
+
+			<section class="archive-section">
+				<div class="section-heading"><span class="section-kicker">02 / SELECTED WORK</span><h2>THE<br><i>ARCHIVE</i></h2><p>Five directions. One operating principle: make the impossible useful.</p></div>
+				<div class="archive-grid">
+					<article class="project-card project-featured"><div class="project-image image-one"><img class="project-media" src="{{ url_for('static', filename='assets/they.webp') }}" alt="Dark archival studio scene for Orbital Harvester"><span>IMG_001 / A</span><strong>01</strong></div><div class="project-info"><span class="project-type">MOTION SYSTEMS</span><h3>ORBITAL<br>HARVESTER</h3><p>A modular machine for extracting value from difficult terrain.</p><span class="project-state">[ IN DEVELOPMENT ]</span></div></article>
+					<article class="project-card project-small"><div class="project-image image-two"><img class="project-media" src="{{ url_for('static', filename='assets/bomb.webp') }}" alt="Industrial vessel study for Flex 02"><span>IMG_002 / B</span><strong>02</strong></div><div class="project-info"><span class="project-type">MATERIAL STUDY</span><h3>FLEX / 02</h3><p>Structures that respond instead of resist.</p></div></article>
+					<article class="project-card project-small project-offset"><div class="project-image image-three"><img class="project-media" src="{{ url_for('static', filename='assets/fan.webp') }}" alt="Field machine study for Low Sun"><span>IMG_003 / C</span><strong>03</strong></div><div class="project-info"><span class="project-type">ENERGY / FIELD</span><h3>LOW SUN</h3><p>Harvesting the overlooked hours of daylight.</p></div></article>
+				</div>
+			</section>
+
+			<section class="manifesto" aria-labelledby="principle-title">
+				<div class="manifesto-topline"><span class="manifesto-index">03 / PRINCIPLE</span><span class="manifesto-status"><i></i> BUILD CREW / PHINEAS + FERB</span><span class="manifesto-coord">FIELD OPS / ISABELLA &nbsp;&nbsp; AGENT / PERRY</span></div>
+				<div class="manifesto-body">
+					<div class="manifesto-side"><span class="manifesto-side-label">NCRYPT DPSSL</span><span class="manifesto-side-copy">Phineas and Ferb<br>are gonna build<br>something today.<small>ORIGINAL / INSPIRED</small></span><span class="manifesto-side-mark">X—07 / Y—24</span></div>
+					<div class="manifesto-core">
+						<div class="manifesto-rule"><span>INPUT / IMAGINATION</span><b></b><span>OUTPUT / POSSIBLE</span></div>
+						<h2 id="principle-title" class="manifesto-quote" data-quote="I KNOW WHAT WE'RE GONNA BUILD TODAY."><span class="manifesto-line line-one"><span class="quote-word" data-word="I">I</span> <span class="quote-word" data-word="KNOW">KNOW</span> <span class="quote-word" data-word="WHAT">WHAT</span></span><span class="manifesto-line line-two"><span class="quote-word quote-accent" data-word="WE'RE">WE'RE</span> <span class="quote-word" data-word="GONNA">GONNA</span></span><span class="manifesto-line line-three"><span class="quote-word" data-word="BUILD">BUILD</span> <span class="quote-word quote-accent" data-word="TODAY.">TODAY.</span></span></h2>
+						<div class="manifesto-measure"><span>00</span><b><i></i></b><span>100</span></div>
+					</div>
+					<div class="manifesto-calibration"><span class="calibration-cross">+</span><span class="calibration-value">Φ 03.14<br>Δ 00.08</span><span class="calibration-line"></span></div>
+				</div>
+				<div class="manifesto-footer"><span class="manifesto-footer-label">PROTOTYPE LOG / PIONEER INVENTIONS</span><div class="manifesto-process"><span>EXPERIMENT</span><b>→</b><span>ITERATE</span><b>→</b><strong>BUILD</strong></div><span class="manifesto-footer-state">LOCKED / 03—03</span></div>
+			</section>
+		</main>
+
+		<script src="{{ url_for('static', filename='script.js') }}"></script>
+	</body>
+</html>

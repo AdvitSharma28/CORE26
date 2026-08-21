@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contact Us — nCrypt dpssl</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@100;200;300;400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="top-nav"><div class="nav-inner"><div class="brand">nCrypt dpssl</div><nav class="nav-center" aria-label="Primary navigation"><a href="{{ url_for('index') }}">Home</a><a href="{{ url_for('about') }}">About Us</a><a href="{{ url_for('contact') }}" class="active" aria-current="page">Contact Us</a><a href="{{ url_for('blog') }}">Blog</a><a href="{{ url_for('map') }}">Map</a></nav><div class="nav-right"><button class="theme-toggle" aria-pressed="false" title="Toggle dark mode"><span class="icon icon-moon" aria-hidden="true">◐</span><span class="icon icon-sun" aria-hidden="true">☼</span></button><a class="muted" href="#channels">core creative</a><a class="cta" href="{{ url_for('about') }}">ABOUT US</a></div></div></header>
+  <main class="page contact-page contact-terminal">
+    <section class="contact-console" aria-labelledby="transmission-heading">
+      <div class="console-rail"><span class="console-number">01</span><span id="transmission-heading">TRANSMISSION / COMPOSE MESSAGE</span><span class="console-state"><i></i> READY FOR INPUT</span></div>
+      <div class="console-grid"><aside class="console-aside"><span>DIRECT LINK</span><strong>TX<br>/ 03</strong><p>Every message is treated as a starting point for a signal.</p><div class="aside-mark">COMMUNICATION / TERMINAL</div></aside><form class="transmission-form" action="" method="get"><div class="form-field"><label for="contact-name"><span>01 / IDENTITY</span><b>NAME</b></label><input id="contact-name" name="name" type="text" autocomplete="name" required placeholder="YOUR NAME"><i aria-hidden="true"></i></div><div class="form-field"><label for="contact-email"><span>02 / CONTACT CHANNEL</span><b>EMAIL</b></label><input id="contact-email" name="email" type="email" autocomplete="email" required placeholder="YOU@EXAMPLE.COM"><i aria-hidden="true"></i></div><div class="form-field payload-field"><label for="contact-message"><span>03 / MESSAGE PAYLOAD</span><b>TRANSMISSION CONTENT</b><small><output id="payload-count">000</output> CHARACTERS / PAYLOAD READY</small></label><textarea id="contact-message" name="message" required placeholder="DESCRIBE WHAT YOU WANT TO BUILD, EXPLORE, OR DISCUSS."></textarea><i aria-hidden="true"></i></div><div class="form-submit"><span><i></i> TRANSMISSION STATUS / STANDBY</span><button type="submit">SEND TRANSMISSION <b>&rarr;</b></button></div></form><aside id="channels" class="channel-stack"><div class="channel-card"><span>CHANNEL / EMAIL</span><strong>AVAILABLE</strong><small>DIRECT MESSAGE LINK</small></div><div class="channel-card"><span>NETWORK / SOCIAL</span><strong>ONLINE</strong><div class="channel-links"><span>GITHUB</span><span>BEHANCE</span><span>DISCORD</span><span>MAIL</span></div></div><div class="team-card"><span>MADE BY / DPSSL nCrypt</span><p>Aadi Menon · Advit Sharma<br>Arhan Goel · Trisha Ranjan</p></div></aside></div>
+    </section>
+  </main>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

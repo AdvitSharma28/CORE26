@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Map — Deforested Areas</title>
+	<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@100;200;300;400;500;600;700&display=swap"
+		rel="stylesheet">
+	<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+	<!-- Leaflet CSS -->
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+		integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+	<style>
+		html,
+		body {
+			height: 100%;
+			margin: 0;
+			overflow: hidden;
+		}
+
+		.map-page {
+			display: flex;
+			flex-direction: row;
+			height: 100vh;
+			padding-top: 80px;
+			/* offset for top-nav */
+			background: var(--bg);
+		}
+
+		.top-nav {
+			position: fixed;
+			top: 0;
+			width: 100%;
+			z-index: 2000;
+			background: var(--surface);
+			border-bottom: 1px solid var(--border);
+		}
+
+		#sidebar {
+			width: 350px;
+			background: var(--surface);
+			border-right: 1px solid var(--border);
+			display: flex;
+			flex-direction: column;
+			z-index: 1000;
+		}
+
+		.sidebar-header {
+			padding: 20px;
+			border-bottom: 1px solid var(--border);
+		}
+
+		.sidebar-header h2 {
+			margin: 0;
+			font-size: 1.2rem;
+			color: var(--text);
+			font-weight: 700;
+			letter-spacing: 1px;
+		}
+
+		.sidebar-header p {
+			margin: 5px 0 0 0;
+			font-size: 0.8rem;
+			color: var(--muted);
+		}
+
+		.location-list {
+			flex: 1;
+			overflow-y: auto;
+			list-style: none;
+			padding: 0;
+			margin: 0;
+		}
+
+		.location-item {
+			padding: 15px 20px;
+			border-bottom: 1px solid var(--border);
+			cursor: pointer;
+			transition: background 0.2s, padding-left 0.2s;
+		}
+
+		.location-item:hover {
+			background: rgba(255, 106, 0, 0.05);
+			padding-left: 25px;
+		}
+
+		.location-item.active {
+			background: rgba(255, 106, 0, 0.1);
+			border-left: 3px solid var(--accent);
+		}
+
+		.location-item h3 {
+			margin: 0 0 5px 0;
+			font-size: 0.95rem;
+			color: var(--accent);
+		}
+
+		.location-item p {
+			margin: 0;
+			font-size: 0.75rem;
+			color: var(--muted);
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		#map {
+			flex: 1;
+			background: #000;
+			z-index: 1;
+		}
+
+		/* Custom styling for leaflet popup to match theme */
+		.leaflet-popup-content-wrapper {
+			background: var(--surface);
+			color: var(--text);
+			border: 1px solid var(--accent);
+			border-radius: 0;
+			font-family: 'IBM Plex Mono', monospace;
+			box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+		}
+
+		.leaflet-popup-tip {
+			background: var(--accent);
+			border: none;
+			box-shadow: none;
+		}
+
+		.leaflet-popup-content {
+			margin: 15px;
+			line-height: 1.5;
+		}
+
+		.popup-title {
+			font-weight: 700;
+			color: var(--accent);
+			font-size: 1.1rem;
+			margin-bottom: 8px;
+			text-transform: uppercase;
+			border-bottom: 1px dashed var(--border);
+			padding-bottom: 6px;
+			letter-spacing: 1px;
+		}
+
+		.popup-details {
+			font-size: 0.85rem;
+			color: var(--text);
+		}
+
+		.popup-stat {
+			display: block;
+			margin-top: 10px;
+			font-size: 0.8rem;
+			color: var(--muted);
+			border-top: 1px solid var(--border);
+			padding-top: 6px;
+		}
+
+		.popup-stat strong {
+			color: var(--accent);
+			font-weight: 600;
+		}
+
+		.leaflet-container a.leaflet-popup-close-button {
+			color: var(--muted);
+			padding: 4px 10px 0 0;
+		}
+
+		.leaflet-container a.leaflet-popup-close-button:hover {
+			color: var(--accent);
+		}
+
+		/* Map UI controls */
+		.leaflet-bar {
+			border: 1px solid var(--border) !important;
+			box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+		}
+
+		.leaflet-bar a {
+			background-color: var(--surface) !important;
+			color: var(--text) !important;
+			border-bottom: 1px solid var(--border) !important;
+			border-radius: 0 !important;
+		}
+
+		.leaflet-bar a:hover {
+			background-color: var(--bg) !important;
+			color: var(--accent) !important;
+		}
+
+		/* Engineering map markers: compact, high-contrast, and deliberately non-pin-like. */
+		.map-marker-icon { background: transparent !important; border: 0 !important; }
+		.map-marker { --marker-ink:#050606; --marker-line:rgba(255,255,255,.94); --marker-core:#e9ece7; position:relative; display:block; width:44px; height:44px; overflow:visible; }
+		.map-marker__body { position:absolute; left:11px; top:11px; width:22px; height:22px; background:var(--marker-ink); border:1px solid var(--marker-line); rotate:45deg; box-shadow:0 2px 0 rgba(0,0,0,.75),0 0 0 1px rgba(0,0,0,.8); will-change:translate,scale,rotate; }
+		.map-marker__body::before,.map-marker__body::after { content:""; position:absolute; background:var(--marker-line); opacity:.72; }
+		.map-marker__body::before { width:1px; height:31px; left:10px; top:-5px; }
+		.map-marker__body::after { width:31px; height:1px; left:-5px; top:10px; }
+		.map-marker__core { position:absolute; left:19px; top:19px; width:6px; height:6px; background:var(--marker-core); border:1px solid #000; transform:rotate(45deg); box-shadow:0 0 0 2px var(--marker-ink); }
+		.map-marker__notch { position:absolute; width:4px; height:4px; border-color:var(--marker-line); border-style:solid; opacity:.9; }
+		.map-marker__notch--a { left:4px; top:4px; border-width:1px 0 0 1px; }
+		.map-marker__notch--b { right:4px; bottom:4px; border-width:0 1px 1px 0; }
+		.map-marker__label { position:absolute; z-index:2; left:50%; top:1px; min-width:max-content; padding:4px 6px; border:1px solid rgba(255,255,255,.82); background:rgba(3,5,5,.94); color:#f1f3ed; font:600 7px/1 'IBM Plex Mono',monospace; letter-spacing:.85px; text-transform:uppercase; opacity:0; pointer-events:none; transform:translate(-50%,-9px); transition:opacity .18s ease,transform .28s cubic-bezier(.16,.9,.2,1); box-shadow:3px 3px 0 rgba(0,0,0,.34); }
+		.map-marker-icon:hover .map-marker__label,.map-marker-icon.active .map-marker__label { opacity:1; transform:translate(-50%,-15px); }
+		.map-marker-icon:hover .map-marker__body,.map-marker-icon.active .map-marker__body { border-color:#fff; box-shadow:0 3px 0 rgba(0,0,0,.85),0 0 0 1px #000,0 0 0 3px rgba(255,255,255,.24); }
+		.map-marker--current { --marker-ink:#1b1007; --marker-line:var(--accent); --marker-core:var(--accent); }
+		.map-marker--current .map-marker__body { border-width:2px; box-shadow:0 2px 0 rgba(0,0,0,.8),0 0 0 1px #000,0 0 16px rgba(255,106,0,.28); }
+		.map-marker--current .map-marker__orbit { position:absolute; left:4px; top:4px; width:34px; height:34px; border:1px dashed var(--accent); transform:rotate(45deg); animation:marker-reticle-spin 7s linear infinite; }
+		.map-marker--current .map-marker__scan { position:absolute; left:22px; top:2px; width:1px; height:10px; background:var(--accent); transform-origin:0 20px; animation:marker-scan 3.4s cubic-bezier(.45,0,.55,1) infinite; }
+		.map-marker--current .map-marker__label { border-color:var(--accent); color:var(--accent); }
+		@keyframes marker-reticle-spin { to { transform:rotate(405deg); } }
+		@keyframes marker-scan { 0%,18% { transform:rotate(0deg); opacity:0; } 28% { opacity:1; } 68%,100% { transform:rotate(180deg); opacity:0; } }
+		@media (prefers-reduced-motion:reduce) { .map-marker--current .map-marker__orbit,.map-marker--current .map-marker__scan { animation:none; } }
+
+		/* Scrollbar for sidebar */
+		.location-list::-webkit-scrollbar {
+			width: 6px;
+		}
+
+		.location-list::-webkit-scrollbar-track {
+			background: var(--surface);
+		}
+
+		.location-list::-webkit-scrollbar-thumb {
+			background: var(--border);
+		}
+
+		.location-list::-webkit-scrollbar-thumb:hover {
+			background: var(--muted);
+		}
+
+		/* Modal Styles */
+		.modal-overlay {
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: rgba(0, 0, 0, 0.7);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			z-index: 3000;
+		}
+
+		.modal-content {
+			background: var(--surface);
+			border: 1px solid var(--accent);
+			width: 90%;
+			max-width: 400px;
+			padding: 20px;
+			color: var(--text);
+			font-family: 'IBM Plex Mono', monospace;
+			box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+		}
+
+		.modal-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			border-bottom: 1px dashed var(--border);
+			padding-bottom: 10px;
+			margin-bottom: 15px;
+		}
+
+		.modal-header h3 {
+			margin: 0;
+			color: var(--accent);
+			font-size: 1.1rem;
+			text-transform: uppercase;
+		}
+
+		.close-modal {
+			background: none;
+			border: none;
+			color: var(--muted);
+			font-size: 1.5rem;
+			cursor: pointer;
+		}
+
+		.close-modal:hover {
+			color: var(--accent);
+		}
+
+		.form-group {
+			margin-bottom: 15px;
+		}
+
+		.form-group label {
+			display: block;
+			margin-bottom: 5px;
+			font-size: 0.85rem;
+			color: var(--muted);
+		}
+
+		.form-group input {
+			width: 100%;
+			padding: 8px;
+			background: var(--bg);
+			border: 1px solid var(--border);
+			color: var(--text);
+			font-family: inherit;
+			box-sizing: border-box;
+		}
+
+		.form-group input:focus {
+			outline: none;
+			border-color: var(--accent);
+		}
+
+		@media (max-width: 900px) {
+			.map-page {
+				flex-direction: column;
+			}
+
+			#sidebar {
+				width: 100%;
+				height: 35vh;
+				border-right: none;
+				border-bottom: 1px solid var(--border);
+			}
+
+			#map {
+				height: 65vh;
+			}
+			.map-marker__label { display:none; }
+		}
+	</style>
+</head>
+
+<body>
+
+	<header class="top-nav">
+		<div class="nav-inner">
+			<div class="brand">nCrypt dpssl</div>
+			<nav class="nav-center">
+				<a href="{{ url_for('index') }}">Home</a>
+				<a href="{{ url_for('about') }}">About Us</a>
+				<a href="{{ url_for('contact') }}">Contact Us</a>
+				<a href="{{ url_for('blog') }}">Blog</a>
+				<a href="{{ url_for('map') }}" class="active" aria-current="page">Map</a>
+			</nav>
+			<div class="nav-right">
+				<span class="nav-status"><i></i> SYSTEM ONLINE</span>
+				<button class="theme-toggle" aria-pressed="false" title="Toggle dark mode">
+					<span class="icon icon-moon" aria-hidden="true">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="currentColor" />
+						</svg>
+					</span>
+					<span class="icon icon-sun" aria-hidden="true">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path
+								d="M6.76 4.84l-1.8-1.79L3.17 4.84l1.8 1.79 1.79-1.79zM1 13h3v-2H1v2zm10-9h2V1h-2v3zm7.04 1.05l1.79-1.79-1.79-1.79-1.8 1.79 1.8 1.79zM20 11v2h3v-2h-3zM6.76 19.16l-1.79 1.79 1.79 1.79 1.8-1.79-1.8-1.79zM12 20a8 8 0 100-16 8 8 0 000 16zm4.24-1.16l1.8 1.79 1.79-1.79-1.79-1.79-1.8 1.79zM11 23h2v-3h-2v3z"
+								fill="currentColor" />
+						</svg>
+					</span>
+				</button>
+				<a class="muted" href="#">core creative</a>
+				<a class="cta" href="{{ url_for('about') }}">ABOUT US</a>
+			</div>
+		</div>
+	</header>
+
+	<main class="page map-page" style="margin:0; padding:0; padding-top:80px; max-width:100%;">
+		<aside id="sidebar">
+			<div class="sidebar-header">
+				<h2>DEFORESTED ZONES</h2>
+				<p>Select a region to analyze.</p>
+				<button id="reformer-btn" class="cta"
+					style="margin-top: 15px; width: 100%; padding: 10px; cursor: pointer; background: var(--accent); color: var(--bg); border: none; font-family: inherit; font-weight: 600; text-transform: uppercase; border-radius: 4px;">Order
+					Machine For Lease</button>
+			</div>
+			<ul class="location-list" id="location-list">
+				<!-- List generated by JS -->
+			</ul>
+		</aside>
+		<div id="map"></div>
+	</main>
+
+	<!-- Reformer Modal -->
+	<div id="reformer-modal" class="modal-overlay" style="display: none;">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h3>Phineas & Ferb's Land Reformer</h3>
+				<button class="close-modal">&times;</button>
+			</div>
+			<div class="modal-body">
+				<p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 20px; font-style: italic;">
+					"Hey Ferb, I know what we're gonna do today! We're gonna lease our Land Reformer to turn this
+					wasteland into a lush paradise!"
+				</p>
+				<form id="reformer-form">
+					<div class="form-group">
+						<label for="client-name">Your Name:</label>
+						<input type="text" id="client-name" placeholder="e.g. Isabella Garcia-Shapiro" required>
+					</div>
+					<div class="form-group">
+						<label for="client-address">Delivery Address:</label>
+						<input type="text" id="client-address" placeholder="e.g. 2308 Maple Drive, Danville" required>
+					</div>
+					<div class="form-group">
+						<label for="client-contact">Contact Number:</label>
+						<input type="text" id="client-contact" placeholder="e.g. 555-0199" required>
+					</div>
+					<div class="form-group">
+						<label for="coords">Coordinates (Lat, Lng):</label>
+						<input type="text" id="coords" placeholder="e.g. 20.0, -10.0" required>
+						<small style="color: var(--accent); font-size: 0.75rem; display: block; margin-top: 5px;">(You
+							can also click anywhere on the map to select coordinates)</small>
+					</div>
+					<div class="form-group">
+						<label for="reform-date">Lease Date & Time:</label>
+						<input type="datetime-local" id="reform-date" required>
+					</div>
+					<button type="submit" class="cta"
+						style="width: 100%; margin-top: 15px; padding: 10px; cursor: pointer; background: var(--accent); color: var(--bg); border: none; font-family: inherit; font-weight: 600; text-transform: uppercase; border-radius: 4px;">Order
+						Delivery to Danville (or anywhere!)</button>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<!-- Leaflet JS -->
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+		integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+	<script>
+		// Initialize map with attributionControl disabled to remove Leaflet watermark
+		const map = L.map('map', { attributionControl: false }).setView([20, 0], 2);
+
+		// Google Earth like imagery from Esri
+		L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+			maxZoom: 17,
+		}).addTo(map);
+
+		// 25 Depleted Forests Locations
+		const locations = [
+			{ name: "Amazon Rainforest", lat: -3.4653, lng: -62.2159, details: "Massive scale deforestation driven by cattle ranching, logging, and agriculture. The 'lungs of the Earth' are shrinking at an alarming rate.", loss: "17% lost in last 50 years" },
+			{ name: "Borneo Lowland Rain Forests", lat: 0.9619, lng: 114.5548, details: "Severe depletion due to palm oil plantations and illegal logging. Endangering habitats of orangutans and pygmy elephants.", loss: "Over 50% lost since 1950" },
+			{ name: "Congo Basin", lat: -1.7258, lng: 23.2558, details: "Threatened by industrial logging, mining, and population expansion. Second largest tropical forest losing ground rapidly.", loss: "Top 3 highest deforestation rate" },
+			{ name: "Gran Chaco", lat: -22.9555, lng: -60.8573, details: "South America's second-largest forest, rapidly cleared for soy production and cattle ranching.", loss: "20% lost since 1985" },
+			{ name: "Sumatra Peat Swamp Forests", lat: 0.5897, lng: 101.3431, details: "Converted into agricultural land and pulpwood plantations, causing extreme carbon emissions.", loss: "Lost half of its area in 30 years" },
+			{ name: "Atlantic Forest", lat: -22.9068, lng: -43.1729, details: "Historically decimated by urbanization, agriculture, and industrialization in Brazil. Highly fragmented.", loss: "Only 12% of original area remains" },
+			{ name: "Mesoamerican Biological Corridor", lat: 14.5, lng: -90.5, details: "Fragmented by cattle ranching, illegal logging, and infrastructure projects across Central America.", loss: "Highly threatened fragmentation" },
+			{ name: "Eastern Australia", lat: -28.0, lng: 153.0, details: "Land clearing for pasture and extreme bushfires driven by climate change have ravaged these unique ecosystems.", loss: "Global deforestation front" },
+			{ name: "Greater Mekong", lat: 19.0, lng: 102.0, details: "Forests destroyed for rubber plantations, illegal logging, and infrastructure like dams.", loss: "Third of forests lost in 40 years" },
+			{ name: "Madagascar Dry Deciduous Forests", lat: -19.0, lng: 46.0, details: "Slash-and-burn agriculture (tavy), charcoal production, and logging of valuable timber like rosewood.", loss: "Less than 20% remains intact" },
+			{ name: "Chocó-Darién", lat: 5.0, lng: -77.0, details: "Deforestation due to illegal gold mining, coca cultivation, and palm oil expansion in Colombia and Ecuador.", loss: "Over 30% heavily degraded" },
+			{ name: "Cerrado Savanna", lat: -14.235, lng: -51.925, details: "Brazil's vast tropical savanna being aggressively cleared for soy and cattle. It is a vital water source.", loss: "Half of native vegetation lost" },
+			{ name: "Papua New Guinea Forests", lat: -6.314, lng: 143.955, details: "Widespread commercial logging and agricultural conversion are destroying rich biodiversity.", loss: "Losing 1.4% forest cover annually" },
+			{ name: "Guinean Forests of West Africa", lat: 7.0, lng: -5.0, details: "Devastated by slash-and-burn farming, mining, and timber extraction.", loss: "Only 15% original cover remains" },
+			{ name: "Eastern Afromontane", lat: -8.0, lng: 34.0, details: "High-altitude forests cut down for timber, firewood, and expanding agricultural frontiers.", loss: "Just 11% original habitat left" },
+			{ name: "Valdivian Temperate Forests", lat: -39.814, lng: -73.245, details: "South America's temperate rainforests replaced by massive pine and eucalyptus plantations.", loss: "High fragmentation and loss" },
+			{ name: "Caucasus Forests", lat: 42.0, lng: 44.0, details: "Logging and unregulated grazing have depleted these diverse mountain forests spanning Europe and Asia.", loss: "Significant biodiversity decline" },
+			{ name: "Himalayan Forests", lat: 28.0, lng: 84.0, details: "Deforested for fuelwood collection, agriculture, and sprawling infrastructure projects.", loss: "25% loss in recent decades" },
+			{ name: "Boreal Forests of Canada", lat: 56.0, lng: -106.0, details: "Impacted by massive logging, tar sands oil extraction, and increased wildfires.", loss: "Millions of hectares altered" },
+			{ name: "Siberian Taiga", lat: 60.0, lng: 100.0, details: "The world's largest forest biome is suffering from rampant illegal logging and devastating climate-driven fires.", loss: "Losing vast carbon sinks" },
+			{ name: "Miombo Woodlands", lat: -15.0, lng: 30.0, details: "Vast dry forests in southern Africa cleared for charcoal production, agriculture, and tobacco farming.", loss: "Millions of acres cleared yearly" },
+			{ name: "Western Ghats", lat: 10.0, lng: 77.0, details: "India's biodiversity hotspot degraded by tea/coffee plantations, dams, and urban sprawl.", loss: "35% forest cover lost since 1920s" },
+			{ name: "New Caledonia Forests", lat: -21.0, lng: 165.0, details: "Nickel mining and frequent wildfires are destroying this unique island ecosystem.", loss: "Threatens endemic species" },
+			{ name: "Philippines Forests", lat: 12.0, lng: 122.0, details: "Historical commercial logging and shifting cultivation have almost wiped out old-growth forests.", loss: "Down from 70% to 20% cover" },
+			{ name: "Mau Forest", lat: -0.5, lng: 35.7, details: "Kenya's largest water tower heavily encroached by illegal settlements and logging.", loss: "Lost 25% area since 2000" }
+		];
+
+		// Compact technical markers keep map coordinates and Leaflet behavior unchanged.
+		function createMarkerIcon(variant, label) {
+			return L.divIcon({
+				className: 'map-marker-icon',
+				html: `<div class="map-marker map-marker--${variant}"><span class="map-marker__label">${label}</span><span class="map-marker__notch map-marker__notch--a"></span><span class="map-marker__notch map-marker__notch--b"></span>${variant === 'current' ? '<span class="map-marker__orbit"></span><span class="map-marker__scan"></span>' : ''}<span class="map-marker__body"></span><span class="map-marker__core"></span></div>`,
+				iconSize: [44, 44],
+				iconAnchor: [22, 22],
+				popupAnchor: [0, -27]
+			});
+		}
+
+		function addMarkerInertia(marker) {
+			const markerElement = marker.getElement();
+			const body = markerElement && markerElement.querySelector('.map-marker__body');
+			if (!body || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+			let active = false;
+			let target = { x: 0, y: 0, r: 45, s: 1 };
+			let current = { x: 0, y: 0, r: 45, s: 1 };
+			function spring(value, destination, amount) { return value + (destination - value) * amount; }
+			function move(event) {
+				const rect = markerElement.getBoundingClientRect();
+				const x = Math.max(-1, Math.min(1, (event.clientX - (rect.left + rect.width / 2)) / (rect.width / 2)));
+				const y = Math.max(-1, Math.min(1, (event.clientY - (rect.top + rect.height / 2)) / (rect.height / 2)));
+				target = { x: x * 4.5, y: y * 3.5, r: 45 + x * 7, s: 1.22 };
+			}
+			function settle() { target = { x: 0, y: 0, r: 45, s: 1 }; }
+			function animate() {
+				current.x = spring(current.x, target.x, active ? .18 : .11);
+				current.y = spring(current.y, target.y, active ? .18 : .11);
+				current.r = spring(current.r, target.r, active ? .16 : .1);
+				current.s = spring(current.s, target.s, active ? .18 : .1);
+				body.style.translate = `${current.x.toFixed(2)}px ${current.y.toFixed(2)}px`;
+				body.style.rotate = `${current.r.toFixed(2)}deg`;
+				body.style.scale = current.s.toFixed(3);
+				requestAnimationFrame(animate);
+			}
+			markerElement.addEventListener('pointerenter', () => { active = true; });
+			markerElement.addEventListener('pointermove', move, { passive: true });
+			markerElement.addEventListener('pointerleave', () => { active = false; settle(); });
+			requestAnimationFrame(animate);
+		}
+
+		const markers = [];
+		const listContainer = document.getElementById('location-list');
+
+		locations.forEach((loc, index) => {
+			const marker = L.marker([loc.lat, loc.lng], { icon: createMarkerIcon('normal', `LOC/${String(index + 1).padStart(2, '0')} · ${loc.name}`) }).addTo(map);
+			addMarkerInertia(marker);
+			markers.push(marker);
+
+			const popupContent = `
+					<div class="popup-title">${loc.name}</div>
+					<div class="popup-details">
+						${loc.details}
+						<span class="popup-stat"><strong>IMPACT:</strong> ${loc.loss}</span>
+					</div>
+				`;
+			marker.bindPopup(popupContent);
+
+			// Create sidebar list item
+			const li = document.createElement('li');
+			li.className = 'location-item';
+			li.innerHTML = `
+					<h3>${loc.name}</h3>
+					<p>${loc.loss}</p>
+				`;
+
+			// Map interaction
+			li.addEventListener('click', () => {
+				// Remove active class from all
+				document.querySelectorAll('.location-item').forEach(el => el.classList.remove('active'));
+				document.querySelectorAll('.map-marker-icon').forEach(el => el.classList.remove('active'));
+
+				// Add active class to current
+				li.classList.add('active');
+				marker.getElement().classList.add('active');
+
+				// Fly to and open popup
+				map.flyTo([loc.lat, loc.lng], 5, {
+					duration: 1.5
+				});
+
+				// Open popup after flying finishes
+				map.once('moveend', () => {
+					marker.openPopup();
+				});
+			});
+
+			// When popup opens from map click directly, update sidebar
+			marker.on('click', () => {
+				document.querySelectorAll('.location-item').forEach(el => el.classList.remove('active'));
+				document.querySelectorAll('.map-marker-icon').forEach(el => el.classList.remove('active'));
+				li.classList.add('active');
+				marker.getElement().classList.add('active');
+				li.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+			});
+
+			listContainer.appendChild(li);
+		});
+
+		// Existing active lease/current-location records use the orange live marker.
+		const currentLocationIcon = createMarkerIcon('current', 'YOU / HERE');
+		const selectionIcon = createMarkerIcon('current', 'SELECT / PENDING');
+
+		function addLeaseMarker(lease) {
+			const marker = L.marker([lease.lat, lease.lng], { icon: currentLocationIcon }).addTo(map);
+			addMarkerInertia(marker);
+			marker.bindPopup(`
+				<div class="popup-title" style="color: var(--accent); border-bottom: 1px dashed var(--border); text-transform: uppercase; font-weight: 700;">Delivery Confirmed!</div>
+				<div class="popup-details" style="margin-top: 5px;">
+					<strong>Hey ${lease.name}!</strong> The Land Reformer is heading to <em>${lease.address}</em> on ${new Date(lease.date).toLocaleString()}.
+					<div class="popup-stat" style="color: var(--muted); border-top: 1px solid var(--border); margin-top: 10px; padding-top: 5px;">
+						<strong style="color: var(--accent);">STATUS:</strong> Phineas, Ferb, and Perry the Platypus are on their way! (Don't tell Doofenshmirtz)
+					</div>
+				</div>
+			`);
+			return marker;
+		}
+
+		fetch('/api/leases')
+			.then(res => res.json())
+			.then(leases => {
+				leases.forEach(addLeaseMarker);
+			})
+			.catch(err => console.error('Error loading leases:', err));
+
+		// Modal logic
+		const reformerBtn = document.getElementById('reformer-btn');
+		const reformerModal = document.getElementById('reformer-modal');
+		const closeModal = document.querySelector('.close-modal');
+		const reformerForm = document.getElementById('reformer-form');
+
+		reformerBtn.addEventListener('click', () => {
+			reformerModal.style.display = 'flex';
+		});
+
+		closeModal.addEventListener('click', () => {
+			reformerModal.style.display = 'none';
+		});
+
+		reformerModal.addEventListener('click', (e) => {
+			if (e.target === reformerModal) {
+				reformerModal.style.display = 'none';
+			}
+		});
+
+		reformerForm.addEventListener('submit', (e) => {
+			e.preventDefault();
+			const name = document.getElementById('client-name').value;
+			const address = document.getElementById('client-address').value;
+			const coords = document.getElementById('coords').value.split(',').map(c => parseFloat(c.trim()));
+			const date = document.getElementById('reform-date').value;
+
+			if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+				const leaseData = {
+					name: name,
+					address: address,
+					lat: coords[0],
+					lng: coords[1],
+					date: date
+				};
+
+				fetch('/api/leases', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(leaseData)
+				})
+				.then(res => res.json())
+				.then(data => {
+					if (data.status === 'success') {
+						const marker = addLeaseMarker(data.lease);
+						marker.openPopup();
+						map.flyTo(coords, 5, { duration: 1.5 });
+						reformerModal.style.display = 'none';
+						reformerForm.reset();
+					}
+				})
+				.catch(err => {
+					console.error(err);
+					alert('Failed to order machine.');
+				});
+			} else {
+				alert('Invalid coordinates format. Please use "Lat, Lng" format.');
+			}
+		});
+
+		// Map click to mark location
+		let tempMarker = null;
+
+		window.openReformerModal = function (lat, lng) {
+			document.getElementById('coords').value = `${lat}, ${lng}`;
+			reformerModal.style.display = 'flex';
+			if (tempMarker) {
+				map.removeLayer(tempMarker);
+				tempMarker = null;
+			}
+		};
+
+		map.on('click', function (e) {
+			const lat = e.latlng.lat.toFixed(4);
+			const lng = e.latlng.lng.toFixed(4);
+
+			if (tempMarker) {
+				map.removeLayer(tempMarker);
+			}
+
+			tempMarker = L.marker([lat, lng], { icon: selectionIcon }).addTo(map);
+			addMarkerInertia(tempMarker);
+			tempMarker.bindPopup(`
+				<div class="popup-title">Selected Location</div>
+				<div class="popup-details">
+					Coordinates: ${lat}, ${lng}
+					<button onclick="window.openReformerModal(${lat}, ${lng})" class="cta" style="width: 100%; margin-top: 10px; padding: 6px; font-size: 0.8rem; background: var(--accent); color: var(--bg); border: none; font-weight: bold; cursor: pointer; text-transform: uppercase;">Lease Machine Here</button>
+				</div>
+			`).openPopup();
+		});
+	</script>
+
+	<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>
